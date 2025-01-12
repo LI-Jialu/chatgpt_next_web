@@ -33,7 +33,6 @@ import {
   LLMModel,
   LLMUsage,
   MultimodalContent,
-  SpeechOptions,
 } from "../api";
 import Locale from "../../locales";
 import { getClientConfig } from "@/app/config/client";
@@ -43,6 +42,8 @@ import {
   isDalle3 as _isDalle3,
 } from "@/app/utils";
 import { fetch } from "@/app/utils/stream";
+
+import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -144,41 +145,95 @@ export class ChatGPTApi implements LLMApi {
     return res.choices?.at(0)?.message?.content ?? res;
   }
 
-  async speech(options: SpeechOptions): Promise<ArrayBuffer> {
-    const requestPayload = {
-      model: options.model,
-      input: options.input,
-      voice: options.voice,
-      response_format: options.response_format,
-      speed: options.speed,
-    };
+  // async speech(options: SpeechOptions): Promise<ArrayBuffer> {
+  //   const requestPayload = {
+  //     model: options.model,
+  //     input: options.input,
+  //     voice: options.voice,
+  //     response_format: options.response_format,
+  //     speed: options.speed,
+  //   };
 
-    console.log("[Request] openai speech payload: ", requestPayload);
+  //   console.log("[Request] openai speech payload: ", requestPayload);
 
-    const controller = new AbortController();
-    options.onController?.(controller);
+  //   const controller = new AbortController();
+  //   options.onController?.(controller);
+
+  //   try {
+  //     const speechPath = this.path(OpenaiPath.SpeechPath);
+  //     const speechPayload = {
+  //       method: "POST",
+  //       body: JSON.stringify(requestPayload),
+  //       signal: controller.signal,
+  //       headers: getHeaders(),
+  //     };
+
+  //     // make a fetch request
+  //     const requestTimeoutId = setTimeout(
+  //       () => controller.abort(),
+  //       REQUEST_TIMEOUT_MS,
+  //     );
+
+  //     const res = await fetch(speechPath, speechPayload);
+  //     clearTimeout(requestTimeoutId);
+  //     return await res.arrayBuffer();
+  //   } catch (e) {
+  //     console.log("[Request] failed to make a speech request", e);
+  //     throw e;
+  //   }
+  // }
+  // 二开：使用azure代替openai
+
+  async speech(options: { input: string }): Promise<ArrayBuffer> {
+    console.log("[Debug] Redirecting speech to Azure TTS");
+
+    const azureSubscriptionKey = "b598a045db804d67ac3e57f4a0b984e8";
+    const azureRegion = "eastasia";
+    const azureVoiceName = "zh-HK-HiuMaanNeural";
+
+    const speechConfig = sdk.SpeechConfig.fromSubscription(
+      azureSubscriptionKey,
+      azureRegion,
+    );
+    speechConfig.speechSynthesisVoiceName = azureVoiceName;
+    speechConfig.speechSynthesisOutputFormat =
+      sdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3;
+
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
 
     try {
-      const speechPath = this.path(OpenaiPath.SpeechPath);
-      const speechPayload = {
-        method: "POST",
-        body: JSON.stringify(requestPayload),
-        signal: controller.signal,
-        headers: getHeaders(),
-      };
-
-      // make a fetch request
-      const requestTimeoutId = setTimeout(
-        () => controller.abort(),
-        REQUEST_TIMEOUT_MS,
+      const result: sdk.SpeechSynthesisResult = await new Promise(
+        (resolve, reject) => {
+          synthesizer.speakTextAsync(
+            options.input,
+            (res: sdk.SpeechSynthesisResult) => {
+              if (res.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+                resolve(res);
+              } else {
+                reject(
+                  new Error(`Speech synthesis failed: ${res.errorDetails}`),
+                );
+              }
+            },
+            (err: string) => {
+              reject(
+                new Error(`Speech synthesis encountered an error: ${err}`),
+              );
+            },
+          );
+        },
       );
 
-      const res = await fetch(speechPath, speechPayload);
-      clearTimeout(requestTimeoutId);
-      return await res.arrayBuffer();
-    } catch (e) {
-      console.log("[Request] failed to make a speech request", e);
-      throw e;
+      if (result.audioData) {
+        return result.audioData as ArrayBuffer;
+      } else {
+        throw new Error("No audio data received from Azure Speech Service.");
+      }
+    } catch (error) {
+      console.error("[Azure Speech Error]", error);
+      throw error;
+    } finally {
+      synthesizer.close();
     }
   }
 
