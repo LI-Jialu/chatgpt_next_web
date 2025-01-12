@@ -27,7 +27,7 @@ const cn = {
     Later: "稍后再说",
     SaasTips: "配置太麻烦，想要立即使用",
     TopTips:
-      "🥳 NextChat AI 首发优惠，立刻解锁 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
+      "🥳 AICan 首发优惠，立刻解锁 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} 条对话`,
@@ -312,10 +312,10 @@ const cn = {
 
     Access: {
       SaasStart: {
-        Title: "使用 NextChat AI",
+        Title: "使用 AICan",
         Label: "（性价比最高的方案）",
         SubTitle:
-          "由 NextChat 官方维护, 零配置开箱即用，支持 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
+          "由 AICan 官方维护, 零配置开箱即用，支持 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
         ChatNow: "立刻对话",
       },
       AccessCode: {
@@ -750,8 +750,8 @@ const cn = {
     Skip: "直接开始",
     NotShow: "不再展示",
     ConfirmNoShow: "确认禁用？禁用后可以随时在设置中重新启用。",
-    Title: "挑选一个面具",
-    SubTitle: "现在开始，与面具背后的灵魂思维碰撞",
+    Title: "挑选一个话题",
+    SubTitle: "通过真实场景掌握粤语",
     More: "查看全部",
   },
 

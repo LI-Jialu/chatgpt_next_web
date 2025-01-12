@@ -4,8 +4,6 @@ import styles from "./home.module.scss";
 
 import { IconButton } from "./button";
 import SettingsIcon from "../icons/settings.svg";
-import GithubIcon from "../icons/github.svg";
-import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
 import DeleteIcon from "../icons/delete.svg";
 import MaskIcon from "../icons/mask.svg";
@@ -32,8 +30,8 @@ import { showConfirm, Selector } from "./ui-lib";
 import clsx from "clsx";
 
 const DISCOVERY = [
-  { name: Locale.Plugin.Name, path: Path.Plugins },
-  { name: "Stable Diffusion", path: Path.Sd },
+  // { name: Locale.Plugin.Name, path: Path.Plugins },
+  // { name: "Stable Diffusion", path: Path.Sd },
   { name: Locale.SearchChat.Page.Title, path: Path.SearchChat },
 ];
 
@@ -188,6 +186,7 @@ export function SideBarHeader(props: {
           </div>
           <div className={styles["sidebar-sub-title"]}>{subTitle}</div>
         </div>
+        {/*  二开：sidebar上的logo */}
         <div className={clsx(styles["sidebar-logo"], "no-dark")}>{logo}</div>
       </div>
       {children}
@@ -236,9 +235,17 @@ export function SideBar(props: { className?: string }) {
       {...props}
     >
       <SideBarHeader
-        title="NextChat"
-        subTitle="Build your own AI assistant."
-        logo={<ChatGptIcon />}
+        title="AICan"
+        subTitle="Build your own AI Cantonese Tutor."
+        logo={
+          <img
+            src="/favicon.ico"
+            alt="AI Can Logo"
+            style={{ width: 32, height: 32 }}
+          />
+        }
+        // 二开，替换logo为自己的
+        // logo={<ChatGptIcon />}
         shouldNarrow={shouldNarrow}
       >
         <div className={styles["sidebar-header-bar"]}>
@@ -313,11 +320,11 @@ export function SideBar(props: { className?: string }) {
             </div>
             <div className={styles["sidebar-action"]}>
               <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-                <IconButton
+                {/* <IconButton
                   aria={Locale.Export.MessageFromChatGPT}
                   icon={<GithubIcon />}
                   shadow
-                />
+                /> */}
               </a>
             </div>
           </>

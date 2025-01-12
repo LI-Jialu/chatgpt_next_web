@@ -21,7 +21,6 @@ import {
 
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
-import ChatGptIcon from "../icons/chatgpt.png";
 import ShareIcon from "../icons/share.svg";
 import BotIcon from "../icons/bot.png";
 
@@ -533,7 +532,8 @@ export function ImagePreviewer(props: {
         <div className={styles["chat-info"]}>
           <div className={clsx(styles["logo"], "no-dark")}>
             <NextImage
-              src={ChatGptIcon.src}
+              // src={ChatGptIcon.src}
+              src={"/favicon.ico"}
               alt="logo"
               width={50}
               height={50}
@@ -541,10 +541,10 @@ export function ImagePreviewer(props: {
           </div>
 
           <div>
-            <div className={styles["main-title"]}>NextChat</div>
-            <div className={styles["sub-title"]}>
+            <div className={styles["main-title"]}>AICan</div>
+            {/* <div className={styles["sub-title"]}>
               github.com/ChatGPTNextWeb/ChatGPT-Next-Web
-            </div>
+            </div> */}
             <div className={styles["icons"]}>
               <ExportAvatar avatar={config.avatar} />
               <span className={styles["icon-space"]}>&</span>

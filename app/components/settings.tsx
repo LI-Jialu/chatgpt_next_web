@@ -35,7 +35,6 @@ import { ModelConfigList } from "./model-config";
 
 import { IconButton } from "./button";
 import {
-  SubmitKey,
   useChatStore,
   Theme,
   useUpdateStore,
@@ -49,8 +48,7 @@ import Locale, {
   changeLang,
   getLang,
 } from "../locales";
-import { copyToClipboard, clientUpdate, semverCompare } from "../utils";
-import Link from "next/link";
+import { copyToClipboard, semverCompare } from "../utils";
 import {
   Anthropic,
   Azure,
@@ -1443,6 +1441,23 @@ export function Settings() {
       </div>
       <div className={styles["settings"]}>
         <List>
+          {/* 更换语言 */}
+          <ListItem title={Locale.Settings.Lang.Name}>
+            <Select
+              aria-label={Locale.Settings.Lang.Name}
+              value={getLang()}
+              onChange={(e) => {
+                changeLang(e.target.value as any);
+              }}
+            >
+              {AllLangs.map((lang) => (
+                <option value={lang} key={lang}>
+                  {ALL_LANG_OPTIONS[lang]}
+                </option>
+              ))}
+            </Select>
+          </ListItem>
+
           <ListItem title={Locale.Settings.Avatar}>
             <Popover
               onClose={() => setShowEmojiPicker(false)}
@@ -1469,7 +1484,7 @@ export function Settings() {
             </Popover>
           </ListItem>
 
-          <ListItem
+          {/* <ListItem
             title={Locale.Settings.Update.Version(currentVersion ?? "unknown")}
             subTitle={
               checkingUpdate
@@ -1500,9 +1515,10 @@ export function Settings() {
                 onClick={() => checkUpdate(true)}
               />
             )}
-          </ListItem>
+          </ListItem> */}
 
-          <ListItem title={Locale.Settings.SendKey}>
+          {/* 用什么按钮发送消息 */}
+          {/* <ListItem title={Locale.Settings.SendKey}>
             <Select
               aria-label={Locale.Settings.SendKey}
               value={config.submitKey}
@@ -1519,7 +1535,7 @@ export function Settings() {
                 </option>
               ))}
             </Select>
-          </ListItem>
+          </ListItem> */}
 
           <ListItem title={Locale.Settings.Theme}>
             <Select
@@ -1534,22 +1550,6 @@ export function Settings() {
               {Object.values(Theme).map((v) => (
                 <option value={v} key={v}>
                   {v}
-                </option>
-              ))}
-            </Select>
-          </ListItem>
-
-          <ListItem title={Locale.Settings.Lang.Name}>
-            <Select
-              aria-label={Locale.Settings.Lang.Name}
-              value={getLang()}
-              onChange={(e) => {
-                changeLang(e.target.value as any);
-              }}
-            >
-              {AllLangs.map((lang) => (
-                <option value={lang} key={lang}>
-                  {ALL_LANG_OPTIONS[lang]}
                 </option>
               ))}
             </Select>
@@ -1575,7 +1575,7 @@ export function Settings() {
             ></InputRange>
           </ListItem>
 
-          <ListItem
+          {/* <ListItem
             title={Locale.Settings.FontFamily.Title}
             subTitle={Locale.Settings.FontFamily.SubTitle}
           >
@@ -1590,7 +1590,7 @@ export function Settings() {
                 )
               }
             ></input>
-          </ListItem>
+          </ListItem> */}
 
           <ListItem
             title={Locale.Settings.AutoGenerateTitle.Title}
@@ -1609,7 +1609,7 @@ export function Settings() {
             ></input>
           </ListItem>
 
-          <ListItem
+          {/* <ListItem
             title={Locale.Settings.SendPreviewBubble.Title}
             subTitle={Locale.Settings.SendPreviewBubble.SubTitle}
           >
@@ -1624,9 +1624,9 @@ export function Settings() {
                 )
               }
             ></input>
-          </ListItem>
+          </ListItem> */}
 
-          <ListItem
+          {/* <ListItem
             title={Locale.Mask.Config.Artifacts.Title}
             subTitle={Locale.Mask.Config.Artifacts.SubTitle}
           >
@@ -1641,8 +1641,9 @@ export function Settings() {
                 )
               }
             ></input>
-          </ListItem>
-          <ListItem
+          </ListItem> */}
+
+          {/* <ListItem
             title={Locale.Mask.Config.CodeFold.Title}
             subTitle={Locale.Mask.Config.CodeFold.SubTitle}
           >
@@ -1657,47 +1658,10 @@ export function Settings() {
                 )
               }
             ></input>
-          </ListItem>
+          </ListItem> */}
         </List>
 
         <SyncItems />
-
-        <List>
-          <ListItem
-            title={Locale.Settings.Mask.Splash.Title}
-            subTitle={Locale.Settings.Mask.Splash.SubTitle}
-          >
-            <input
-              aria-label={Locale.Settings.Mask.Splash.Title}
-              type="checkbox"
-              checked={!config.dontShowMaskSplashScreen}
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.dontShowMaskSplashScreen =
-                      !e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
-
-          <ListItem
-            title={Locale.Settings.Mask.Builtin.Title}
-            subTitle={Locale.Settings.Mask.Builtin.SubTitle}
-          >
-            <input
-              aria-label={Locale.Settings.Mask.Builtin.Title}
-              type="checkbox"
-              checked={config.hideBuiltinMasks}
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.hideBuiltinMasks = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
-        </List>
 
         <List>
           <ListItem
@@ -1734,7 +1698,7 @@ export function Settings() {
         </List>
 
         <List id={SlotID.CustomModel}>
-          {saasStartComponent}
+          {/* {saasStartComponent} */}
           {accessCodeComponent}
 
           {!accessStore.hideUserApiKey && (
@@ -1811,7 +1775,7 @@ export function Settings() {
             </ListItem>
           ) : null}
 
-          <ListItem
+          {/* <ListItem
             title={Locale.Settings.Access.CustomModel.Title}
             subTitle={Locale.Settings.Access.CustomModel.SubTitle}
             vertical={true}
@@ -1828,7 +1792,7 @@ export function Settings() {
                 )
               }
             ></input>
-          </ListItem>
+          </ListItem> */}
         </List>
 
         <List>

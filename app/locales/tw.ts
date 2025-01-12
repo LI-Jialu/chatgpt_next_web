@@ -505,8 +505,8 @@ const tw = {
     Skip: "跳過",
     NotShow: "不再顯示",
     ConfirmNoShow: "確認停用？停用後可以隨時在設定中重新啟用。",
-    Title: "挑選一個角色範本",
-    SubTitle: "現在開始，與角色範本背後的靈魂思維碰撞",
+    Title: "挑選一個主題",
+    SubTitle: "通過真實場景掌握粵語",
     More: "搜尋更多",
   },
   URLCommand: {
