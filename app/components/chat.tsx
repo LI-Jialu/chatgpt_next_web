@@ -97,8 +97,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   CHAT_PAGE_SIZE,
-  DEFAULT_TTS_ENGINE,
-  ModelProvider,
   Path,
   REQUEST_TIMEOUT_MS,
   UNFINISHED_INPUT,
@@ -114,14 +112,15 @@ import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
 import { MultimodalContent } from "../client/api";
 
-import { ClientApi } from "../client/api";
 import { createTTSPlayer } from "../utils/audio";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
 
 import { isEmpty } from "lodash-es";
 import { getModelProvider } from "../utils/model";
 import { RealtimeChat } from "@/app/components/realtime-chat";
 import clsx from "clsx";
+
+// 二开：把openai语音换成microsoft sdk
+import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 const localStorage = safeLocalStorage();
 
@@ -1243,46 +1242,115 @@ function _Chat() {
   const accessStore = useAccessStore();
   const [speechStatus, setSpeechStatus] = useState(false);
   const [speechLoading, setSpeechLoading] = useState(false);
+  // async function openaiSpeech(text: string) {
+  //   if (speechStatus) {
+  //     ttsPlayer.stop();
+  //     setSpeechStatus(false);
+  //   } else {
+  //     var api: ClientApi;
+  //     api = new ClientApi(ModelProvider.GPT);
+  //     const config = useAppConfig.getState();
+  //     setSpeechLoading(true);
+  //     ttsPlayer.init();
+  //     let audioBuffer: ArrayBuffer;
+  //     const { markdownToTxt } = require("markdown-to-txt");
+  //     const textContent = markdownToTxt(text);
+  //     if (config.ttsConfig.engine !== DEFAULT_TTS_ENGINE) {
+  //       const edgeVoiceName = accessStore.edgeVoiceName();
+  //       const tts = new MsEdgeTTS();
+  //       await tts.setMetadata(
+  //         edgeVoiceName,
+  //         OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3,
+  //       );
+  //       audioBuffer = await tts.toArrayBuffer(textContent);
+  //     } else {
+  //       audioBuffer = await api.llm.speech({
+  //         model: config.ttsConfig.model,
+  //         input: textContent,
+  //         voice: config.ttsConfig.voice,
+  //         speed: config.ttsConfig.speed,
+  //       });
+  //     }
+  //     setSpeechStatus(true);
+  //     ttsPlayer
+  //       .play(audioBuffer, () => {
+  //         setSpeechStatus(false);
+  //       })
+  //       .catch((e) => {
+  //         console.error("[OpenAI Speech]", e);
+  //         showToast(prettyObject(e));
+  //         setSpeechStatus(false);
+  //       })
+  //       .finally(() => setSpeechLoading(false));
+  //   }
+  // }
+
+  // 二开：把openai语音换成azure sdk语音
   async function openaiSpeech(text: string) {
     if (speechStatus) {
       ttsPlayer.stop();
       setSpeechStatus(false);
     } else {
-      var api: ClientApi;
-      api = new ClientApi(ModelProvider.GPT);
-      const config = useAppConfig.getState();
       setSpeechLoading(true);
       ttsPlayer.init();
+
       let audioBuffer: ArrayBuffer;
       const { markdownToTxt } = require("markdown-to-txt");
       const textContent = markdownToTxt(text);
-      if (config.ttsConfig.engine !== DEFAULT_TTS_ENGINE) {
-        const edgeVoiceName = accessStore.edgeVoiceName();
-        const tts = new MsEdgeTTS();
-        await tts.setMetadata(
-          edgeVoiceName,
-          OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3,
+
+      // Azure Speech Service 配置
+      const subscriptionKey = "b598a045db804d67ac3e57f4a0b984e8"; // 固定密钥
+      const serviceRegion = "eastasia"; // 固定区域
+      const voiceName = "zh-HK-HiuMaanNeural"; // 粤语语音
+
+      // Azure Speech SDK 初始化
+      const speechConfig = sdk.SpeechConfig.fromSubscription(
+        subscriptionKey,
+        serviceRegion,
+      );
+      speechConfig.speechSynthesisVoiceName = voiceName;
+      speechConfig.speechSynthesisOutputFormat =
+        sdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3;
+
+      const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
+
+      try {
+        // 调用 Azure Speech SDK 进行语音合成
+        const result = await new Promise<sdk.SpeechSynthesisResult>(
+          (resolve, reject) => {
+            synthesizer.speakTextAsync(
+              textContent,
+              (res) => resolve(res),
+              (err) => reject(err),
+            );
+          },
         );
-        audioBuffer = await tts.toArrayBuffer(textContent);
-      } else {
-        audioBuffer = await api.llm.speech({
-          model: config.ttsConfig.model,
-          input: textContent,
-          voice: config.ttsConfig.voice,
-          speed: config.ttsConfig.speed,
-        });
+
+        if (result.audioData) {
+          audioBuffer = result.audioData;
+        } else {
+          throw new Error("No audio data received from Azure Speech Service.");
+        }
+
+        // 播放音频
+        setSpeechStatus(true);
+        ttsPlayer
+          .play(audioBuffer, () => {
+            setSpeechStatus(false);
+          })
+          .catch((e) => {
+            console.error("[Azure Speech]", e);
+            showToast(prettyObject(e));
+            setSpeechStatus(false);
+          });
+      } catch (e) {
+        console.error("[Azure Speech]", e);
+        showToast(prettyObject(e));
+        setSpeechStatus(false);
+      } finally {
+        setSpeechLoading(false);
+        synthesizer.close(); // 释放资源
       }
-      setSpeechStatus(true);
-      ttsPlayer
-        .play(audioBuffer, () => {
-          setSpeechStatus(false);
-        })
-        .catch((e) => {
-          console.error("[OpenAI Speech]", e);
-          showToast(prettyObject(e));
-          setSpeechStatus(false);
-        })
-        .finally(() => setSpeechLoading(false));
     }
   }
 
