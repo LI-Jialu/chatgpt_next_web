@@ -185,7 +185,7 @@ export class ChatGPTApi implements LLMApi {
   // 二开：使用azure代替openai
 
   async speech(options: { input: string }): Promise<ArrayBuffer> {
-    console.log("[Debug] Redirecting speech to Azure TTS");
+    console.log("[Debug] Function-Speech,  Redirecting speech to Azure TTS");
 
     const azureSubscriptionKey = "b598a045db804d67ac3e57f4a0b984e8";
     const azureRegion = "eastasia";

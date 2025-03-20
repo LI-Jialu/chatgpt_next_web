@@ -1287,6 +1287,10 @@ function _Chat() {
 
   // 二开：把openai语音换成azure sdk语音
   async function openaiSpeech(text: string) {
+    console.log(
+      "[Debug] Function-openaiSpeech,  Redirecting speech to Azure TTS",
+    );
+
     if (speechStatus) {
       ttsPlayer.stop();
       setSpeechStatus(false);
