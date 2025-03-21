@@ -1286,75 +1286,89 @@ function _Chat() {
   // }
 
   // 二开：把openai语音换成azure sdk语音
+  let isProcessing = false; // 全局变量，用于加锁机制
   async function openaiSpeech(text: string) {
     console.log(
-      "[Debug] Function-openaiSpeech,  Redirecting speech to Azure TTS",
+      "[Debug] Function-openaiSpeech, Redirecting speech to Azure TTS",
     );
 
-    if (speechStatus) {
-      ttsPlayer.stop();
-      setSpeechStatus(false);
-    } else {
-      setSpeechLoading(true);
-      ttsPlayer.init();
+    // 加锁机制：防止函数被重复调用
+    if (isProcessing) {
+      console.warn("[Warning] Speech processing is already in progress.");
+      return;
+    }
+    isProcessing = true; // 标记为正在处理
 
-      let audioBuffer: ArrayBuffer;
-      const { markdownToTxt } = require("markdown-to-txt");
-      const textContent = markdownToTxt(text);
-
-      // Azure Speech Service 配置
-      const subscriptionKey = "b598a045db804d67ac3e57f4a0b984e8"; // 固定密钥
-      const serviceRegion = "eastasia"; // 固定区域
-      const voiceName = "zh-HK-HiuMaanNeural"; // 粤语语音
-
-      // Azure Speech SDK 初始化
-      const speechConfig = sdk.SpeechConfig.fromSubscription(
-        subscriptionKey,
-        serviceRegion,
-      );
-      speechConfig.speechSynthesisVoiceName = voiceName;
-      speechConfig.speechSynthesisOutputFormat =
-        sdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3;
-
-      const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
-
-      try {
-        // 调用 Azure Speech SDK 进行语音合成
-        const result = await new Promise<sdk.SpeechSynthesisResult>(
-          (resolve, reject) => {
-            synthesizer.speakTextAsync(
-              textContent,
-              (res) => resolve(res),
-              (err) => reject(err),
-            );
-          },
-        );
-
-        if (result.audioData) {
-          audioBuffer = result.audioData;
-        } else {
-          throw new Error("No audio data received from Azure Speech Service.");
-        }
-
-        // 播放音频
-        setSpeechStatus(true);
-        ttsPlayer
-          .play(audioBuffer, () => {
-            setSpeechStatus(false);
-          })
-          .catch((e) => {
-            console.error("[Azure Speech]", e);
-            showToast(prettyObject(e));
-            setSpeechStatus(false);
-          });
-      } catch (e) {
-        console.error("[Azure Speech]", e);
-        showToast(prettyObject(e));
+    try {
+      if (speechStatus) {
+        ttsPlayer.stop();
         setSpeechStatus(false);
-      } finally {
-        setSpeechLoading(false);
-        synthesizer.close(); // 释放资源
+      } else {
+        setSpeechLoading(true);
+        ttsPlayer.init();
+
+        let audioBuffer: ArrayBuffer;
+        const { markdownToTxt } = require("markdown-to-txt");
+        const textContent = markdownToTxt(text);
+
+        // Azure Speech Service 配置
+        const subscriptionKey = "b598a045db804d67ac3e57f4a0b984e8"; // 固定密钥
+        const serviceRegion = "eastasia"; // 固定区域
+        const voiceName = "zh-HK-HiuMaanNeural"; // 粤语语音
+
+        // Azure Speech SDK 初始化
+        const speechConfig = sdk.SpeechConfig.fromSubscription(
+          subscriptionKey,
+          serviceRegion,
+        );
+        speechConfig.speechSynthesisVoiceName = voiceName;
+        speechConfig.speechSynthesisOutputFormat =
+          sdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3;
+
+        const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
+
+        try {
+          // 调用 Azure Speech SDK 进行语音合成
+          const result = await new Promise<sdk.SpeechSynthesisResult>(
+            (resolve, reject) => {
+              synthesizer.speakTextAsync(
+                textContent,
+                (res) => resolve(res),
+                (err) => reject(err),
+              );
+            },
+          );
+
+          if (result.audioData) {
+            audioBuffer = result.audioData;
+          } else {
+            throw new Error(
+              "No audio data received from Azure Speech Service.",
+            );
+          }
+
+          // 播放音频
+          setSpeechStatus(true);
+          await ttsPlayer
+            .play(audioBuffer, () => {
+              setSpeechStatus(false);
+            })
+            .catch((e) => {
+              console.error("[Azure Speech]", e);
+              showToast(prettyObject(e));
+              setSpeechStatus(false);
+            });
+        } catch (e) {
+          console.error("[Azure Speech]", e);
+          showToast(prettyObject(e));
+          setSpeechStatus(false);
+        } finally {
+          setSpeechLoading(false);
+          synthesizer.close(); // 释放资源
+        }
       }
+    } finally {
+      isProcessing = false; // 解锁
     }
   }
 
