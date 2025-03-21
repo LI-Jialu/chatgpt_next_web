@@ -1287,6 +1287,7 @@ function _Chat() {
 
   // 二开：把openai语音换成azure sdk语音
   let isProcessing = false; // 全局变量，用于加锁机制
+
   async function openaiSpeech(text: string) {
     console.log(
       "[Debug] Function-openaiSpeech, Redirecting speech to Azure TTS",
@@ -1298,23 +1299,31 @@ function _Chat() {
       return;
     }
     isProcessing = true; // 标记为正在处理
+    console.log("[Debug] Lock acquired: isProcessing = true");
 
     try {
       if (speechStatus) {
+        console.log("[Debug] speechStatus is true, stopping current playback");
         ttsPlayer.stop();
         setSpeechStatus(false);
+        console.log("[Debug] Playback stopped, speechStatus set to false");
       } else {
+        console.log("[Debug] speechStatus is false, starting speech synthesis");
         setSpeechLoading(true);
+        console.log("[Debug] Speech loading started, setSpeechLoading(true)");
         ttsPlayer.init();
+        console.log("[Debug] TTS player initialized");
 
         let audioBuffer: ArrayBuffer;
         const { markdownToTxt } = require("markdown-to-txt");
         const textContent = markdownToTxt(text);
+        console.log("[Debug] Text converted to plain text:", textContent);
 
         // Azure Speech Service 配置
         const subscriptionKey = "b598a045db804d67ac3e57f4a0b984e8"; // 固定密钥
         const serviceRegion = "eastasia"; // 固定区域
         const voiceName = "zh-HK-HiuMaanNeural"; // 粤语语音
+        console.log("[Debug] Azure Speech Service configured");
 
         // Azure Speech SDK 初始化
         const speechConfig = sdk.SpeechConfig.fromSubscription(
@@ -1324,11 +1333,14 @@ function _Chat() {
         speechConfig.speechSynthesisVoiceName = voiceName;
         speechConfig.speechSynthesisOutputFormat =
           sdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3;
+        console.log("[Debug] Azure Speech SDK initialized");
 
         const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
+        console.log("[Debug] Speech synthesizer created");
 
         try {
           // 调用 Azure Speech SDK 进行语音合成
+          console.log("[Debug] Starting Azure Speech SDK synthesis");
           const result = await new Promise<sdk.SpeechSynthesisResult>(
             (resolve, reject) => {
               synthesizer.speakTextAsync(
@@ -1341,6 +1353,9 @@ function _Chat() {
 
           if (result.audioData) {
             audioBuffer = result.audioData;
+            console.log(
+              "[Debug] Audio data received from Azure Speech Service",
+            );
           } else {
             throw new Error(
               "No audio data received from Azure Speech Service.",
@@ -1348,27 +1363,38 @@ function _Chat() {
           }
 
           // 播放音频
+          console.log("[Debug] Starting audio playback");
           setSpeechStatus(true);
+          console.log("[Debug] Playback started, speechStatus set to true");
           await ttsPlayer
             .play(audioBuffer, () => {
               setSpeechStatus(false);
+              console.log(
+                "[Debug] Playback completed, speechStatus set to false",
+              );
             })
             .catch((e) => {
-              console.error("[Azure Speech]", e);
+              console.error("[Azure Speech] Playback error:", e);
               showToast(prettyObject(e));
               setSpeechStatus(false);
+              console.log("[Debug] Playback failed, speechStatus set to false");
             });
         } catch (e) {
-          console.error("[Azure Speech]", e);
+          console.error("[Azure Speech] Synthesis error:", e);
           showToast(prettyObject(e));
           setSpeechStatus(false);
+          console.log("[Debug] Synthesis failed, speechStatus set to false");
         } finally {
           setSpeechLoading(false);
           synthesizer.close(); // 释放资源
+          console.log(
+            "[Debug] Speech synthesizer closed, setSpeechLoading(false)",
+          );
         }
       }
     } finally {
       isProcessing = false; // 解锁
+      console.log("[Debug] Lock released: isProcessing = false");
     }
   }
 
