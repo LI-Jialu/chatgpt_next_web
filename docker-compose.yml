@@ -7,7 +7,7 @@ services:
     ports:
       - 3000:3000
     environment:
-      - OPENAI_API_KEY=$OPENAI_API_KEY
+      - OPENAI_API_KEY=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
       - GOOGLE_API_KEY=$GOOGLE_API_KEY
       - CODE=$CODE
       - BASE_URL=$BASE_URL
